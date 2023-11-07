@@ -53,7 +53,6 @@ void task_gui(void* param)
     GUI_SetFont(GUI_FONT_20B_1);
     GUI_SetTextAlign(GUI_TA_CENTER);
     GUI_DispStringAt("1 Square = 2 Feet", GUI_GetScreenSizeX()/2,GUI_GetScreenSizeY()/2 - GUI_GetFontSizeY()/2);
-    //cyhal_system_delay_ms(2000); //this delay is not allow with rtos
 
     GUI_SetColor(GUI_WHITE);
 
@@ -62,15 +61,6 @@ void task_gui(void* param)
 
     for(int i = 0; i<=320; i+=10)
         GUI_DrawVLine(i, 0, 240);
-
-    GUI_SetPenSize(4);
-    GUI_SetColor(GUI_RED);
-    vTaskDelay(3000);
-    GUI_DrawLine(70, 100, 160, 100);
-    vTaskDelay(3000);
-    GUI_DrawLine(160, 100, 160, 160);
-    vTaskDelay(3000);
-    GUI_DrawLine(160, 160, 220, 160);
 
     /* Repeatedly running part of the task */
     for(;;)
@@ -87,7 +77,6 @@ void task_gui(void* param)
                 /* Turn on the LED. */
                 case BOT_START:
                 {
-                	GUI_SetPenSize(15);
                     line_gap+=3; if(line_gap>30) line_gap = 30;
                     update_line_graph(10+line_gap);
                     break;

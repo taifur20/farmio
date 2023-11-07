@@ -97,16 +97,16 @@ void cytron_motor_driver_control(signed int motorLSpeed, signed int motorRSpeed)
       //Right Motor Speed
       if (motorRSpeed >= 0) {
         if (motorRSpeed > 100) motorRSpeed = 100;
+        cyhal_gpio_write(_in2Pin, true);
         rslt = cyhal_pwm_set_duty_cycle(&pwm_obj_an2, motorLSpeed, 1000);
         rslt = cyhal_pwm_start(&pwm_obj_an2);
-        cyhal_gpio_write(_in2Pin, true);
       }
       else if (motorRSpeed < 0) {
         if (motorRSpeed < -100) motorRSpeed = -100;
         motorRSpeed = motorRSpeed * -1;
+        cyhal_gpio_write(_in2Pin, false);
         rslt = cyhal_pwm_set_duty_cycle(&pwm_obj_an2, motorLSpeed, 1000);
         rslt = cyhal_pwm_start(&pwm_obj_an2);
-        cyhal_gpio_write(_in2Pin, false);
       }
       break;
 

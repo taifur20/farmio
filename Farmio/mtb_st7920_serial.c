@@ -8,6 +8,10 @@
 #include "cybsp.h"
 #include "cyhal.h"
 #include "mtb_st7920_serial.h"
+#include "FreeRTOS.h"
+#include "task.h"
+//for debugging purpose only
+#include "cy_retarget_io.h"
 
 /* setup below is as follows
  * A0 ---------> SCLK (EN)
@@ -54,14 +58,12 @@ void SendByteSPI(uint8_t byte)
 
 void ST7920_SendCmd (uint8_t cmd)
 {
-
 	cyhal_gpio_write(CS_PIN, true);  // PUll the CS high
 
 	SendByteSPI(0xf8+(0<<1));  // send the SYNC + RS(0)
 	SendByteSPI(cmd&0xf0);  // send the higher nibble first
 	SendByteSPI((cmd<<4)&0xf0);  // send the lower nibble
-	cyhal_system_delay_us(50);
-	//vTaskDelay(50); non blocking delay in rtos
+    vTaskDelay(50); //non blocking delay in rtos
 
 	cyhal_gpio_write(CS_PIN, false);  // PUll the CS LOW
 
@@ -75,7 +77,7 @@ void ST7920_SendData (uint8_t data)
 	SendByteSPI(0xf8+(1<<1));  // send the SYNC + RS(1)
 	SendByteSPI(data&0xf0);  // send the higher nibble first
 	SendByteSPI((data<<4)&0xf0);  // send the lower nibble
-	cyhal_system_delay_us(50);
+	vTaskDelay(50);
 	cyhal_gpio_write(CS_PIN, false);  // PUll the CS LOW
 }
 
@@ -117,18 +119,18 @@ void ST7920_GraphicMode (int enable)   // 1-enable, 0-disable
 	if (enable == 1)
 	{
 		ST7920_SendCmd(0x30);  // 8 bit mode
-		cyhal_system_delay_ms(1);
+		vTaskDelay(1);
 		ST7920_SendCmd(0x34);  // switch to Extended instructions
-		cyhal_system_delay_ms(1);
+		vTaskDelay(1);
 		ST7920_SendCmd(0x36);  // enable graphics
-		cyhal_system_delay_ms(1);
+		vTaskDelay(1);
 		Graphic_Check = 1;  // update the variable
 	}
 
 	else if (enable == 0)
 	{
 		ST7920_SendCmd(0x30);  // 8 bit mode
-		cyhal_system_delay_ms(1);
+		vTaskDelay(1);
 		Graphic_Check = 0;  // update the variable
 	}
 }
@@ -199,7 +201,7 @@ void ST7920_Clear()
 	else
 	{
 		ST7920_SendCmd(0x01);   // clear the display using command
-		cyhal_system_delay_ms(2); // delay >1.6 ms
+		vTaskDelay(2);
 	}
 }
 
@@ -212,32 +214,30 @@ void ST7920_Init (void)
     rslt = cyhal_gpio_init(RST_PIN, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, false);
 
     cyhal_gpio_write(RST_PIN, false);
-    cyhal_system_delay_ms(10);
+    vTaskDelay(10);
 	cyhal_gpio_write(RST_PIN, true);
 
-	cyhal_system_delay_ms(50);;   //wait for >40 ms
+
+	vTaskDelay(40);
+	ST7920_SendCmd(0x30);  // 8bit mode
+	vTaskDelay(110);
 
 	ST7920_SendCmd(0x30);  // 8bit mode
-    cyhal_system_delay_ms(110);  //  >100us delay
-
-	ST7920_SendCmd(0x30);  // 8bit mode
-	cyhal_system_delay_ms(40);  // >37us delay
-
+	vTaskDelay(40);
 	ST7920_SendCmd(0x08);  // D=0, C=0, B=0
-	cyhal_system_delay_ms(110);  // >100us delay
+	vTaskDelay(110);
 
 	ST7920_SendCmd(0x01);  // clear screen
-	cyhal_system_delay_ms(12);  // >10 ms delay
+	vTaskDelay(12);
 
 
 	ST7920_SendCmd(0x06);  // cursor increment right no shift
-	cyhal_system_delay_ms(1);  // 1ms delay
-
+	vTaskDelay(1);
 	ST7920_SendCmd(0x0C);  // D=1, C=0, B=0
-	cyhal_system_delay_ms(1);  // 1ms delay
+	vTaskDelay(1);
 
 	ST7920_SendCmd(0x02);  // return to home
-	cyhal_system_delay_ms(1);  // 1ms delay
+	vTaskDelay(1);
 
 }
 

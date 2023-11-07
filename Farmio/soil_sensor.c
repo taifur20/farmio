@@ -9,6 +9,8 @@
 #include "cyhal.h"
 #include "cybsp.h"
 #include "soil_sensor.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "cy_retarget_io.h"
 
 /*******************************************************************************
@@ -48,7 +50,6 @@ void init_soil_sensor(void){
 	//result = cyhal_uart_init(&uart_obj, P0_3, P0_2, NC, NC, NULL, &uart_config); //IO1 - P0_3, IO0 - P0_2
 	if (soil_result != CY_RSLT_SUCCESS)
 	{
-		printf("init not success!!!\r\n\n");
 		CY_ASSERT(0);
 
 	}
@@ -62,7 +63,6 @@ void init_soil_sensor(void){
 	soil_result = cyhal_uart_set_baud(&soil_sensor_uart_obj, SOIL_BAUD_RATE, NULL);
 	if (soil_result != CY_RSLT_SUCCESS)
 	{
-	    printf("baud not success!!!\r\n\n");
 	    CY_ASSERT(0);
 
 	}
@@ -86,7 +86,7 @@ void init_soil_sensor(void){
 	}
 }
 
-
+//for testing the sensor reading
 void read_soil_sensor(void){
 
 	uint8_t query_buf[8] = {0x01, 0x03, 0x00, 0x00, 0x00, 0x07, 0x04, 0x08};
@@ -94,7 +94,8 @@ void read_soil_sensor(void){
 	// switch RS-485 to transmit mode
 	cyhal_gpio_write(DE, true);
 	cyhal_gpio_write(RE, true);
-	cyhal_system_delay_ms(2);
+	//cyhal_system_delay_ms(2);
+	vTaskDelay(2);
 
 	// Send the query data to the NPK sensor
 	cyhal_uart_write(&soil_sensor_uart_obj, (void*)query_buf, &query_length);
@@ -104,7 +105,8 @@ void read_soil_sensor(void){
 	cyhal_gpio_write(RE, false);
 
 	//delay to allow response bytes to be received!
-	cyhal_system_delay_ms(500);
+	//cyhal_system_delay_ms(500);
+	vTaskDelay(500);
 
 	if (1) {  // Check if there are enough bytes available to read
 		cyhal_uart_read(&soil_sensor_uart_obj, (void*)rx_buf, &rx_length);  // Read the received data into the receivedData array
@@ -137,7 +139,8 @@ float read_ph(void){
 	// switch RS-485 to transmit mode
 	cyhal_gpio_write(DE, true);
 	cyhal_gpio_write(RE, true);
-	cyhal_system_delay_ms(2);
+	//cyhal_system_delay_ms(2);
+	vTaskDelay(2);
 
 	// Send the query data to the NPK sensor
 	cyhal_uart_write(&soil_sensor_uart_obj, (void*)query_buf, &query_length);
@@ -147,7 +150,8 @@ float read_ph(void){
 	cyhal_gpio_write(RE, false);
 
 	//delay to allow response bytes to be received!
-	cyhal_system_delay_ms(500);
+	//cyhal_system_delay_ms(500);
+	vTaskDelay(500);
 
 	uint8_t read_data;
 	for (uint8_t i = 0; i < 8; i++) {
@@ -155,13 +159,10 @@ float read_ph(void){
 	    values[i] = read_data;
 	  }
 	cyhal_uart_clear(&soil_sensor_uart_obj); //clear if any unread uart buffers
-	for (uint8_t i = 0; i < 8; i++) {
-		printf("%X\t", values[i]);
-	  }
 
 	uint8_t ph = values[3]<<8|values[4];
 	float soil_ph = ph/100.0;
-	printf("Soil pH: %.2f\n", ph);
+	//printf("Soil pH: %.2f\n", ph);
 	return soil_ph;
 
 }
@@ -170,20 +171,18 @@ float read_temperature(void){
 
 	uint8_t query_buf[8] = { 0x01, 0x03, 0x00, 0x13, 0x00, 0x01, 0x75, 0xCF };
 	size_t query_length = 8;
-	// switch RS-485 to transmit mode
+
 	cyhal_gpio_write(DE, true);
 	cyhal_gpio_write(RE, true);
-	cyhal_system_delay_ms(2);
 
-	// Send the query data to the NPK sensor
+	vTaskDelay(2);
+
 	cyhal_uart_write(&soil_sensor_uart_obj, (void*)query_buf, &query_length);
 
-	// switching RS485 to receive mode
 	cyhal_gpio_write(DE, false);
 	cyhal_gpio_write(RE, false);
 
-	//delay to allow response bytes to be received!
-	cyhal_system_delay_ms(500);
+	vTaskDelay(500);
 
 	uint8_t read_data;
 	for (uint8_t i = 0; i < 8; i++) {
@@ -191,13 +190,10 @@ float read_temperature(void){
 	    values[i] = read_data;
 	  }
 	cyhal_uart_clear(&soil_sensor_uart_obj); //clear if any unread uart buffers
-	for (uint8_t i = 0; i < 8; i++) {
-		printf("%X\t", values[i]);
-	  }
 
 	uint8_t temperature = values[3]<<8|values[4];
     float soil_temp = temperature/10.0;
-	printf("Soil temperature: %.2fC\n", soil_temp);
+	//printf("Soil temperature: %.2fC\n", soil_temp);
 	return soil_temp;
 
 }
@@ -206,20 +202,18 @@ float read_moisture(void){
 
 	uint8_t query_buf[8] = { 0x01, 0x03, 0x00, 0x12, 0x00, 0x01, 0x24, 0x0F };
 	size_t query_length = 8;
-	// switch RS-485 to transmit mode
+
 	cyhal_gpio_write(DE, true);
 	cyhal_gpio_write(RE, true);
-	cyhal_system_delay_ms(2);
 
-	// Send the query data to the NPK sensor
+	vTaskDelay(2);
+
 	cyhal_uart_write(&soil_sensor_uart_obj, (void*)query_buf, &query_length);
 
-	// switching RS485 to receive mode
 	cyhal_gpio_write(DE, false);
 	cyhal_gpio_write(RE, false);
 
-	//delay to allow response bytes to be received!
-	cyhal_system_delay_ms(500);
+	vTaskDelay(500);
 
 	uint8_t read_data;
 	for (uint8_t i = 0; i < 8; i++) {
@@ -227,13 +221,10 @@ float read_moisture(void){
 	    values[i] = read_data;
 	  }
 	cyhal_uart_clear(&soil_sensor_uart_obj); //clear if any unread uart buffers
-	for (uint8_t i = 0; i < 8; i++) {
-		printf("%X\t", values[i]);
-	  }
 
 	uint8_t moisture = values[3]<<8|values[4];
     float soil_mois = moisture/10;
-	printf("Soil moisture: %.2f%%\n", soil_mois);
+	//printf("Soil moisture: %.2f%%\n", soil_mois);
 	return soil_mois;
 
 }
@@ -242,20 +233,18 @@ int read_conductivity(void){
 
 	uint8_t query_buf[8] = { 0x01, 0x03, 0x00, 0x15, 0x00, 0x01, 0x95, 0xCE };
 	size_t query_length = 8;
-	// switch RS-485 to transmit mode
+
 	cyhal_gpio_write(DE, true);
 	cyhal_gpio_write(RE, true);
-	cyhal_system_delay_ms(2);
 
-	// Send the query data to the NPK sensor
+	vTaskDelay(2);
+
 	cyhal_uart_write(&soil_sensor_uart_obj, (void*)query_buf, &query_length);
 
-	// switching RS485 to receive mode
 	cyhal_gpio_write(DE, false);
 	cyhal_gpio_write(RE, false);
 
-	//delay to allow response bytes to be received!
-	cyhal_system_delay_ms(500);
+	vTaskDelay(500);
 
 	uint8_t read_data;
 	for (uint8_t i = 0; i < 8; i++) {
@@ -263,13 +252,10 @@ int read_conductivity(void){
 	    values[i] = read_data;
 	  }
 	cyhal_uart_clear(&soil_sensor_uart_obj); //clear if any unread uart buffers
-	for (uint8_t i = 0; i < 8; i++) {
-		printf("%X\t", values[i]);
-	  }
 
 	uint8_t conductivity = values[3]<<8|values[4];
     int soil_condc = conductivity;
-	printf("Soil conductivity: %dus/cm\n", soil_condc);
+	//printf("Soil conductivity: %dus/cm\n", soil_condc);
 	return soil_condc;
 
 }
@@ -278,20 +264,18 @@ int read_nitrogen(void){
 
 	uint8_t query_buf[8] = { 0x01, 0x03, 0x00, 0x1E, 0x00, 0x01, 0xE4, 0x0C };
 	size_t query_length = 8;
-	// switch RS-485 to transmit mode
+
 	cyhal_gpio_write(DE, true);
 	cyhal_gpio_write(RE, true);
-	cyhal_system_delay_ms(2);
 
-	// Send the query data to the NPK sensor
+	vTaskDelay(2);
+
 	cyhal_uart_write(&soil_sensor_uart_obj, (void*)query_buf, &query_length);
 
-	// switching RS485 to receive mode
 	cyhal_gpio_write(DE, false);
 	cyhal_gpio_write(RE, false);
 
-	//delay to allow response bytes to be received!
-	cyhal_system_delay_ms(500);
+	vTaskDelay(500);
 
 	uint8_t read_data;
 	for (uint8_t i = 0; i < 8; i++) {
@@ -299,13 +283,10 @@ int read_nitrogen(void){
 	    values[i] = read_data;
 	  }
 	cyhal_uart_clear(&soil_sensor_uart_obj); //clear if any unread uart buffers
-	for (uint8_t i = 0; i < 8; i++) {
-		printf("%X\t", values[i]);
-	  }
 
 	uint8_t nitrogen = values[3]<<8|values[4];
     int soil_nitrogen = nitrogen;
-	printf("Soil temperature: %dmg/kg\n", soil_nitrogen);
+	//printf("Soil temperature: %dmg/kg\n", soil_nitrogen);
 	return soil_nitrogen;
 
 }
@@ -314,20 +295,18 @@ int read_phosphorous(void){
 
 	uint8_t query_buf[8] = { 0x01, 0x03, 0x00, 0x1F, 0x00, 0x01, 0xB5, 0xCC };
 	size_t query_length = 8;
-	// switch RS-485 to transmit mode
+
 	cyhal_gpio_write(DE, true);
 	cyhal_gpio_write(RE, true);
-	cyhal_system_delay_ms(2);
 
-	// Send the query data to the NPK sensor
+	vTaskDelay(2);
+
 	cyhal_uart_write(&soil_sensor_uart_obj, (void*)query_buf, &query_length);
 
-	// switching RS485 to receive mode
 	cyhal_gpio_write(DE, false);
 	cyhal_gpio_write(RE, false);
 
-	//delay to allow response bytes to be received!
-	cyhal_system_delay_ms(500);
+	vTaskDelay(500);
 
 	uint8_t read_data;
 	for (uint8_t i = 0; i < 8; i++) {
@@ -335,13 +314,10 @@ int read_phosphorous(void){
 	    values[i] = read_data;
 	  }
 	cyhal_uart_clear(&soil_sensor_uart_obj); //clear if any unread uart buffers
-	for (uint8_t i = 0; i < 8; i++) {
-		printf("%X\t", values[i]);
-	  }
 
 	uint8_t phosphorous = values[3]<<8|values[4];
     int soil_phosphorous = phosphorous;
-	printf("Soil temperature: %dmg/kg\n", soil_phosphorous);
+	//printf("Soil temperature: %dmg/kg\n", soil_phosphorous);
 	return soil_phosphorous;
 
 }
@@ -351,20 +327,16 @@ int read_potassium(void){
 
 	uint8_t query_buf[8] = { 0x01, 0x03, 0x00, 0x20, 0x00, 0x01, 0x85, 0xC0 };
 	size_t query_length = 8;
-	// switch RS-485 to transmit mode
 	cyhal_gpio_write(DE, true);
 	cyhal_gpio_write(RE, true);
-	cyhal_system_delay_ms(2);
+	vTaskDelay(2);
 
-	// Send the query data to the NPK sensor
 	cyhal_uart_write(&soil_sensor_uart_obj, (void*)query_buf, &query_length);
 
-	// switching RS485 to receive mode
 	cyhal_gpio_write(DE, false);
 	cyhal_gpio_write(RE, false);
 
-	//delay to allow response bytes to be received!
-	cyhal_system_delay_ms(500);
+	vTaskDelay(500);
 
 	uint8_t read_data;
 	for (uint8_t i = 0; i < 8; i++) {
@@ -372,13 +344,9 @@ int read_potassium(void){
 	    values[i] = read_data;
 	  }
 	cyhal_uart_clear(&soil_sensor_uart_obj); //clear if any unread uart buffers
-	for (uint8_t i = 0; i < 8; i++) {
-		printf("%X\t", values[i]);
-	  }
 
 	uint8_t potassium = values[3]<<8|values[4];
     int soil_potassium = potassium;
-	printf("Soil temperature: %dmg/kg\n", soil_potassium);
 	return soil_potassium;
 
 }
