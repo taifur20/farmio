@@ -148,27 +148,30 @@ static void task_graphics(void* arg)
 	ST7920_Clear();
 	char value[20];
 
-	if(soil_data_available){
-		sprintf(value, "%.2f", soil_ph); //convert float value to string
-		ST7920_SendString(0,0, value);
+	while(1){
 
-		sprintf(value, "%.2f", soil_temperature); //convert float value to string
-		ST7920_SendString(0,10, value);
+		if(soil_data_available){
+			sprintf(value, "%.2f", soil_ph); //convert float value to string
+			ST7920_SendString(0,0, value);
 
-		sprintf(value, "%.2f", soil_moisture); //convert float value to string
-	    ST7920_SendString(1,0, value);
+			sprintf(value, "%.2f", soil_temperature); //convert float value to string
+			ST7920_SendString(0,10, value);
 
-	    sprintf(value, "%d", soil_conductivity); //convert float value to string
-	    ST7920_SendString(1,10, value);
+			sprintf(value, "%.2f", soil_moisture); //convert float value to string
+			ST7920_SendString(1,0, value);
 
-	    sprintf(value, "%d", soil_nitrogen); //convert float value to string
-	    ST7920_SendString(2,0, value);
+			sprintf(value, "%d", soil_conductivity); //convert float value to string
+			ST7920_SendString(1,10, value);
 
-	    sprintf(value, "%d", soil_phosphorous); //convert float value to string
-	    ST7920_SendString(2,10, value);
+			sprintf(value, "%d", soil_nitrogen); //convert float value to string
+			ST7920_SendString(2,0, value);
 
-	    sprintf(value, "%d", soil_potassium); //convert float value to string
-	    ST7920_SendString(3,0, value);
+			sprintf(value, "%d", soil_phosphorous); //convert float value to string
+			ST7920_SendString(2,10, value);
+
+			sprintf(value, "%d", soil_potassium); //convert float value to string
+			ST7920_SendString(3,0, value);
+		}
 	}
 }
 
@@ -260,87 +263,87 @@ static void task_emfile(void* arg)
         CY_ASSERT(0U);
     }
 
-    //printf("Opening the file for reading...\n");
 
-    /* Open the file for reading. */
-    if(file_read_flag == 1){
-    	file_ptr = FS_FOpen(FILE_NAME, "r");
+    while(1){
 
-    	if (file_ptr != NULL)
-    	{
-        	/* Last byte is for storing the NULL character. */
-        	num_bytes_to_read = sizeof(file_data) - 1U;
-        	volume_size = FS_GetFileSize(file_ptr);
+    	/* Open the file for reading. */
+    	if(file_read_flag == 1){
+    		file_ptr = FS_FOpen(FILE_NAME, "r");
 
-        	if(volume_size < num_bytes_to_read)
-        	{
-            	num_bytes_to_read = volume_size;
-        	}
-
-        	printf("Reading %"PRIu32" bytes from the file. ", num_bytes_to_read);
-        	volume_size = FS_Read(file_ptr, file_data, num_bytes_to_read);
-
-        	if(volume_size != num_bytes_to_read)
-        	{
-            	error = FS_FError(file_ptr);
-            	//check_error("Error in reading from the file", error);
-        	}
-
-        	/* Terminate the string using NULL. */
-        	file_data[num_bytes_to_read] = '\0';
-
-        	/* Display the file content. */
-        	printf("File Content:\n\"%s\"\n", file_data);
-
-        	error = FS_FClose(file_ptr);
-        	//check_error("Error in closing the file", error);
-
-        	//printf("\nOpening the file for overwriting...\n");
-    	}
-    	else
-    	{
-    		printf("Unable to read. File not found.\n");
-    		//printf("\nOpening the file for writing...\n");
-    	}
-    }
-
-    /* Mode 'w' truncates the file size to zero if the file exists otherwise
-     * creates a new file.
-     */
-    //write the sensor reading
-    if(soil_data_read_happen == 1){
-    	char string_to_write[150];
-    	sprintf(string_to_write, "%d,%d,%.2f,%.2f,%.2f,%d,%d,%d,%d", point_x, point_y, soil_ph,
-    			soil_temperature, soil_moisture, soil_conductivity, soil_nitrogen, soil_phosphorous, soil_potassium);
-
-    	file_ptr = FS_FOpen(FILE_NAME, "w");
-
-    	if(file_ptr != NULL)
-    	{
-    		volume_size = FS_Write(file_ptr, string_to_write, strlen(string_to_write));
-
-    		if(volume_size != strlen(string_to_write))
+    		if (file_ptr != NULL)
     		{
-    			error = FS_FError(file_ptr);
-    			//check_error("Error in writing to the file", error);
+    			/* Last byte is for storing the NULL character. */
+    			num_bytes_to_read = sizeof(file_data) - 1U;
+    			volume_size = FS_GetFileSize(file_ptr);
+
+    			if(volume_size < num_bytes_to_read)
+    			{
+    				num_bytes_to_read = volume_size;
+    			}
+
+    			printf("Reading %"PRIu32" bytes from the file. ", num_bytes_to_read);
+    			volume_size = FS_Read(file_ptr, file_data, num_bytes_to_read);
+
+    			if(volume_size != num_bytes_to_read)
+    			{
+    				error = FS_FError(file_ptr);
+    				//check_error("Error in reading from the file", error);
+    			}
+
+    			/* Terminate the string using NULL. */
+    			file_data[num_bytes_to_read] = '\0';
+
+    			/* Display the file content. */
+    			printf("File Content:\n\"%s\"\n", file_data);
+
+    			error = FS_FClose(file_ptr);
+    			//check_error("Error in closing the file", error);
+
+    			//printf("\nOpening the file for overwriting...\n");
     		}
-
-    		printf("File is written with the following message:\n");
-    		printf("\"%s\"\n\n", string_to_write);
-
-    		printf("You can now view the file content in your PC. File name is \"%s\"\n", FILE_NAME);
-
-    		error = FS_FClose(file_ptr);
-    		//check_error("Error in closing the file", error);
-
-    		FS_Unmount(volume_name);
-
-    		printf("Filesystem operations completed successfully!\n");
-    		soil_data_read_happen = 0;
+    		else
+    		{
+    			printf("Unable to read. File not found.\n");
+    			//printf("\nOpening the file for writing...\n");
+    		}
     	}
-    	else
-    	{
-    		printf("Unable to open the file for writing! Exiting...\n");
+
+    	/* Mode 'w' truncates the file size to zero if the file exists otherwise
+    	 * creates a new file.
+    	 */
+    	//write the sensor reading
+    	if(soil_data_read_happen == 1){
+    		char string_to_write[150];
+    		sprintf(string_to_write, "%d,%d,%.2f,%.2f,%.2f,%d,%d,%d,%d", point_x, point_y, soil_ph,
+    				soil_temperature, soil_moisture, soil_conductivity, soil_nitrogen, soil_phosphorous, soil_potassium);
+
+    		file_ptr = FS_FOpen(FILE_NAME, "w");
+
+    		if(file_ptr != NULL)
+    		{
+    			volume_size = FS_Write(file_ptr, string_to_write, strlen(string_to_write));
+
+    			if(volume_size != strlen(string_to_write))
+    			{
+    				error = FS_FError(file_ptr);
+    				//check_error("Error in writing to the file", error);
+    			}
+
+    			printf("File is written with the following message:\n");
+    			printf("\"%s\"\n\n", string_to_write);
+
+    			error = FS_FClose(file_ptr);
+    			//check_error("Error in closing the file", error);
+
+    			FS_Unmount(volume_name);
+
+    			printf("Filesystem operations completed successfully!\n");
+    			soil_data_read_happen = 0;
+    		}
+    		else
+    		{
+    			printf("Unable to open the file for writing! Exiting...\n");
+    		}
     	}
     }
 }
